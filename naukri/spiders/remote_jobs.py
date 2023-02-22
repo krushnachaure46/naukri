@@ -2,6 +2,7 @@ import scrapy
 import json
 from naukri.items import NaukriItem
 from scrapy.loader import ItemLoader
+from math import ceil
 
 
 class RemoteJobsSpider(scrapy.Spider):
@@ -17,6 +18,8 @@ class RemoteJobsSpider(scrapy.Spider):
     page = 1
     def parse(self, response):
         payload = json.loads(response.body)
+        total=payload['noOfJobs']
+        page_count = ceil(total/20)
         for j in payload['jobDetails']:
             i= ItemLoader(item = NaukriItem())
             i.add_value('title',j['title'])
@@ -25,7 +28,7 @@ class RemoteJobsSpider(scrapy.Spider):
             i.add_value('location',(x['label'] for x in j ['placeholders'] if x['type']=='location'))
             i.add_value('date',j['createdDate'])
             yield i.load_item()
-            while self.page <=10:
+            while self.page <=page_count:
                 self.page = self.page + 1
                 base_url = "https://www.naukri.com/jobapi/v3/search?\
                   noOfResults=20\
